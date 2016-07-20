@@ -1,0 +1,11 @@
+<?php
+
+function _render_block($id){
+    $block = \Drupal\block\Entity\Block::load($id);
+    $block_content = \Drupal::entityManager()
+        ->getViewBuilder('block')
+        ->view($block);
+
+    return array('#markup' => drupal_render($block_content));
+}
+

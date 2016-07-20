@@ -1,0 +1,10 @@
+name: Mod Block
+type: module
+description: This module by team Joomlavi
+package: Custom module - Required
+
+dependencies:
+ - block
+
+core: 8.x
+version: 1.0
