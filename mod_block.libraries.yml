@@ -1,0 +1,28 @@
+animation:
+  version: VERSION
+  css:
+    css/animate.css: {}
+
+  js:
+    js/mod_block_animation.js: {}
+
+parallax:
+  version: VERSION
+  js:
+    js/mod_block_animation_parallax.js: {}
+
+jquery.appear:
+  version: VERSION
+  js:
+    js/jquery.appear.js: {}
+
+jquery.iscroll:
+  version: VERSION
+  js:
+    js/iscroll.js: {}
+
+
+jquery.stellar:
+  version: VERSION
+  js:
+    js/jquery.stellar.min.js: {}

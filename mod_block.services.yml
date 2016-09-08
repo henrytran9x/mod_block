@@ -1,5 +1,7 @@
 services:
   mod_block.twig.render_block:
-      class: Drupal\mod_block\Twig\BlockExtension
-      tags:
-        - { name: twig.extension }
+    class: Drupal\mod_block\Twig\BlockExtension
+    tags:
+      - { name: twig.extension }
+  mod_block.admin:
+    class: Drupal\mod_block\Services\MBAdminServices

@@ -1,0 +1,5 @@
+mod_block.admin_form:
+  title: 'Block settings'
+  parent: system.admin_config_content
+  description: 'Configure allow page run animation Block'
+  route_name: mod_block.admin_form

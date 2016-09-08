@@ -1,0 +1,4 @@
+'administer mod block settings':
+  title: 'Mod Block administrator setting'
+  description: Allow role use setting mod block.
+  restrict access: true

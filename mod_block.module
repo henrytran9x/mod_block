@@ -1,5 +1,9 @@
 <?php
 
+use Drupal\block\Entity\Block;
+use Drupal\block\BlockInterface;
+use Drupal\file\Entity\File;
+
 function _render_block($id){
     $block = \Drupal\block\Entity\Block::load($id);
     $block_content = \Drupal::entityManager()
@@ -7,5 +11,333 @@ function _render_block($id){
         ->view($block);
 
     return array('#markup' => drupal_render($block_content));
+}
+
+/**
+ * Implements hook_page_attachments().
+ */
+function mod_block_page_attachments(array &$attachments)
+{
+    $config_block  = \Drupal::config('mod_block.settings');
+    $services_block = \Drupal::service('mod_block.admin');
+   // $services_block->mod_block_animation_exclude_these_paths();
+    if($services_block->mod_block_animation_exclude_these_paths() != 1) {
+        $attachments['#attached']['library'][] = 'mod_block/jquery.appear';
+        $attachments['#attached']['library'][] = 'mod_block/animation';
+    }
+
+        /*
+        $attachments['#attached']['drupalSettings']['mod_block_animation']  = array(
+            'disable_mobile' => (bool) ($config_block->get('mod_block_animation_mobile')) ? $config_block->get('mod_block_animation_mobile') : 0,
+        );
+        */
+
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function mod_block_form_block_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id)
+{
+
+    if (\Drupal::currentUser()->hasPermission('administer block classes')) {
+
+        /** @var \Drupal\block\BlockInterface $block */
+
+            $block = $form_state->getFormObject()->getEntity();
+
+           $form['mod_block_settings'] = array(
+                '#type' => 'details',
+                '#title' => 'Block Settings',
+                '#weight' => -10,
+                '#collapsible' => TRUE,
+                '#collapsed' => TRUE,
+                '#tree' => TRUE,
+            );
+
+           $form['mod_block_settings']['mod_block_title'] = array(
+                '#type' => 'details',
+                '#title' => 'Block Title',
+                '#collapsible' => TRUE,
+                '#collapsed' => TRUE,
+            );
+           $form['mod_block_settings']['mod_block_title']['mod_title_tag'] = array(
+               '#type' => 'select',
+               '#title' => 'Tag Title',
+               '#options' => array('none' => 'None','h1' => 'H1','h2' => 'H2','h3' => 'H3','h4' => 'H4','h5' => 'H5','h6' => 'H6'),
+               '#default_value' => $block->getThirdPartySetting('mod_block','title_tag') ? $block->getThirdPartySetting('mod_block','title_tag') : 'none' ,
+           );
+           $form['mod_block_settings']['mod_block_title']['mod_title_class'] = array(
+                '#type' => 'textfield',
+                '#title' => t('Class title'),
+                '#default_value' => $block->getThirdPartySetting('mod_block','title_class'),
+            );
+           $form['mod_block_settings']['mod_block_title']['mod_title_style'] = array(
+                '#type' => 'textarea',
+                '#title' => t('Custom title style css'),
+                '#description' => t('This code style sheet'),
+                '#default_value' => $block->getThirdPartySetting('mod_block','title_style'),
+            );
+           $form['mod_block_settings']['mod_block_animation'] = array(
+                '#type' => 'details',
+                '#title' => 'Block Animation',
+                '#weight' => 0,
+                '#collapsible' => TRUE,
+                '#collapsed' => TRUE,
+            );
+
+           $form['mod_block_settings']['mod_block_animation']['mod_animate'] = array(
+                '#type' => 'select',
+                '#title' => t('Appears animate'),
+                '#options' => \Drupal::service('mod_block.admin')->_mod_block_animation_animations(),
+                '#default_value' => $block->getThirdPartySetting('mod_block','animate'),
+            );
+           $form['mod_block_settings']['mod_block_animation']['mod_block_background_image'] = array(
+                '#tree' => TRUE,
+                '#title' => t('Background image'),
+                '#type' => 'managed_file',
+                '#description' => t('The uploaded image will be displayed on the page unless it is marked as "removed".'),
+                '#default_value' => $block->getThirdPartySetting('mod_block','background_image') ? array($block->getThirdPartySetting('mod_block','background_image')) : '',
+                '#upload_location' => 'public://mod_block/',
+            );
+           $form['mod_block_settings']['mod_block_animation']['mod_block_background_image_type'] = array(
+                '#type' => 'select',
+                '#title' => t('Background image type'),
+                '#options' => array('default' => 'Default', 'parallax' => 'Parallax'),
+                '#default_value' => $block->getThirdPartySetting('mod_block','background_image_type'),
+            );
+           $form['mod_block_settings']['mod_custom_style'] = array(
+                '#type' => 'details',
+                '#title' => t('Block Custom Style'),
+                '#weight' => 1,
+                '#collapsible' => TRUE,
+                '#collapsed' => TRUE,
+            );
+            $wrap = $block->getThirdPartySetting('mod_block','block_wrap');
+
+           $form['mod_block_settings']['mod_custom_style']['mod_block_prefix'] = array(
+                '#type' => 'textfield',
+                '#title' => t('Prefix Block'),
+                '#default_value' => isset($wrap) ? $wrap['#prefix'] : ''
+            );
+
+           $form['mod_block_settings']['mod_custom_style']['mod_block_suffix'] = array(
+                '#type' => 'textfield',
+                '#title' => t('Suffix Block'),
+                '#default_value' => isset($wrap) ? $wrap['#suffix'] : ''
+            );
+
+           $form['mod_block_settings']['mod_custom_style']['mod_block_content_class'] = array(
+                '#type' => 'textfield',
+                '#title' => t('Custom block content class'),
+                '#default_value' => $block->getThirdPartySetting('mod_block','block_content_class'),
+            );
+
+           $form['mod_block_settings']['mod_custom_style']['mod_block_content_style_css'] = array(
+                '#type' => 'textarea',
+                '#title' => t('Custom block content style css'),
+                '#description' => t('This code style sheet'),
+                '#default_value' => $block->getThirdPartySetting('mod_block','block_content_style_css'),
+            );
+
+           $form['mod_block_settings']['mod_responsive_settings'] = array(
+                '#type' => 'details',
+                '#title' => t('Block Responsive Settings'),
+                '#weight' => 2,
+                '#collapsible' => TRUE,
+                '#collapsed' => TRUE,
+            );
+
+           $form['mod_block_settings']['mod_responsive_settings']['mod_block_responsive'] = array(
+                '#type' => 'checkboxes',
+                '#title' => 'Responsive settings',
+                '#options' => array(
+                    'hphone' => 'Hidden on Phone',
+                    'vphone' => 'Visible on Phone',
+                    'htablet' => 'Hidden on Tablet',
+                    'vtablet' => 'Visible on Tablet',
+                    'hdesktop' => 'Hidden on Desktop',
+                    'vdesktop' => 'Visible on Desktop'
+                ),
+               '#default_value' => (array)$block->getThirdPartySetting('mod_block','responsive'),
+            );
+        $form['#entity_builders'][] = 'mod_block_form_block_form_builder';
+    }
+}
+
+
+function mod_block_form_block_form_builder($entity_type, BlockInterface $block, &$form, \Drupal\Core\Form\FormStateInterface $form_state){
+    $values = $form_state->getValues();
+    $block->setThirdPartySetting('mod_block','title_tag',$values['mod_block_settings']['mod_block_title']['mod_title_tag']);
+    $block->setThirdPartySetting('mod_block','title_class',$values['mod_block_settings']['mod_block_title']['mod_title_class']);
+    $block->setThirdPartySetting('mod_block','title_style',$values['mod_block_settings']['mod_block_title']['mod_title_style']);
+    $block->setThirdPartySetting('mod_block','animate',$values['mod_block_settings']['mod_block_animation']['mod_animate']);
+    if(isset($values['mod_block_settings']['mod_block_animation']['mod_block_background_image'][0]) && !empty($values['mod_block_settings']['mod_block_animation']['mod_block_background_image'][0])) {
+        $fid =  $values['mod_block_settings']['mod_block_animation']['mod_block_background_image'][0];
+    }
+    if(isset($fid) && $fid != 0){
+        $file_usage = \Drupal::service('file.usage');
+        $file = File::load($fid);
+        $file_usage->add($file,'mod_block', $file->getMimeType(), 1);
+        $block->setThirdPartySetting('mod_block','background_image',$fid);
+    }
+
+    $block->setThirdPartySetting('mod_block','background_image_type',$values['mod_block_settings']['mod_block_animation']['mod_block_background_image_type']);
+    $wrap = array('#prefix'=> $values['mod_block_settings']['mod_custom_style']['mod_block_prefix'],'#suffix' => $values['mod_block_settings']['mod_custom_style']['mod_block_suffix']);
+    $block->setThirdPartySetting('mod_block','block_wrap',$wrap);
+    $block->setThirdPartySetting('mod_block','block_content_class',$values['mod_block_settings']['mod_custom_style']['mod_block_content_class']);
+    $block->setThirdPartySetting('mod_block','block_content_style_css',$values['mod_block_settings']['mod_custom_style']['mod_block_content_style_css']);
+    $block->setThirdPartySetting('mod_block','responsive',$values['mod_block_settings']['mod_responsive_settings']['mod_block_responsive']);
+    $block->save();
+}
+
+/**
+ * Implements hook_theme_registry_alter().
+ */
+function mod_block_theme_registry_alter(&$theme_registry)
+{
+
+}
+
+
+/**
+ * Implements hook_theme_suggestions_HOOK_alter().
+ */
+function mod_block_theme_suggestions_block_alter(array &$suggestions, array $variables)
+{
+    //var_dump($variables);
+    if (!empty($variables['elements']['#id'])) {
+        $block = Block::load($variables['elements']['#id']);
+        if(!empty($block->getThirdPartySettings('mod_block'))){
+            $suggestions[] = 'block__mod';
+        }
+       // $suggestions[] = 'block__mod';
+    }
+
+}
+
+/**
+ * Implements hook_preprocess_block().
+ */
+function mod_block_preprocess_block(&$variables)
+{
+    if (!empty($variables['elements']['#id'])) {
+        $block = Block::load($variables['elements']['#id']);
+
+        //Title Tag
+        if($title_tag = $block->getThirdPartySetting('mod_block','title_tag')){
+            if($title_tag != 'none') {
+                $variables['title_tag'] = $title_tag;
+            }
+        }
+
+        // Title Class
+        if($title_class = $block->getThirdPartySetting('mod_block','title_class'))
+        {
+            $variables['title_attributes']['class'][] = $title_class;
+        }
+        // Title Style
+        if($style_title = $block->getThirdPartySetting('mod_block','title_style')){
+            $variables['title_attributes']['style'] = $style_title;
+        }
+
+        //animate
+        if($animate = $block->getThirdPartySetting('mod_block','animate')){
+            $variables['attributes']['class'][] = 'block-animate';
+            $variables['attributes']['data-animate'] = $animate;
+            $variables['elements']['#attached']['library'][] = 'mod_block/jquery.appear';
+            $variables['elements']['#attached']['library'][] = 'mod_block/animation';
+        }
+        $style_block = array();
+
+        // Background Block
+
+        $fid = $block->getThirdPartySetting('mod_block','background_image');
+        if(isset($fid) && $file = File::load($fid)){
+            $url = file_create_url($file->getFileUri());
+            $style_block[] = "background-image:url({$url}); background-position:center top;background-size: cover";
+            if($background_image_style = $block->getThirdPartySetting('mod_block','background_image_type')){
+                switch ($background_image_style){
+                    case 'parallax':
+                        $variables['attributes']['class'][] = 'blk-parallax';
+
+                        $variables['elements']['#attached']['library'][] = 'mod_block/jquery.stellar';
+                        $variables['elements']['#attached']['library'][] = 'mod_block/jquery.iscroll';
+                        $variables['elements']['#attached']['library'][] = 'mod_block/parallax';
+                        $variables['attributes']['data-uk-parallax'] = "{bg: '-500'}";
+                        break;
+                }
+            }
+
+        }
+        // Style Block
+
+        if($block_style = $block->getThirdPartySetting('mod_block','block_content_style_css')){
+            $style_block[] = $block_style;
+        }
+
+        // Prefix and Suffix Block
+
+        if($block_wrap = $block->getThirdPartySetting('mod_block','block_wrap')){
+            if(!empty($block_wrap['#prefix'])){
+                $variables['block_prefix'] = $block_wrap['#prefix'];
+
+            }
+            if(!empty($block_wrap['#suffix'])){
+                $variables['block_suffix'] = $block_wrap['#suffix'];
+
+            }
+
+
+        }
+
+        // Class Block
+        if($block_class = $block->getThirdPartySetting('mod_block','block_content_class')){
+            $variables['attributes']['class'][] = $block_class;
+        }
+
+        // Check $Style_block not empty
+        if(!empty($style_block)){
+            $variables['attributes']['style'] = implode(";",$style_block);
+        }
+
+        // Check Responsive
+        if ($responsive = $block->getThirdPartySetting('mod_block', 'responsive')) {
+            if ($responsive['hphone']) {
+                $variables['attributes']['class'][] = 'hidden-xs';
+            }
+            if ($responsive['vphone']) {
+                $variables['attributes']['class'][] = 'visible-xs';
+            }
+            if ($responsive['htablet']) {
+                $variables['attributes']['class'][] = 'hidden-sm';
+            }
+            if ($responsive['vtablet']) {
+                $variables['attributes']['class'][] = 'visible-sm';
+            }
+            if ($responsive['hdesktop']) {
+                $variables['attributes']['class'][] = 'hidden-md';
+                $variables['attributes']['class'][] = 'hidden-lg';
+            }
+            if ($responsive['vdesktop']) {
+                $variables['attributes']['class'][] = 'visible-md';
+                $variables['attributes']['class'][] = 'visible-lg';
+            }
+
+            //$variables['attributes']['class'][] = $responsive;
+        }
+    }
+}
+
+
+function mod_block_theme(){
+    return array (
+        'block__mod' => array (
+        'render element' => 'elements',
+        'template' => 'block--mod' ,
+        'base hook' => 'block',
+        'path' => drupal_get_path('module', 'mod_block').'/templates',
+    )
+  );
 }
 

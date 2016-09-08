@@ -1,0 +1,7 @@
+mod_block.admin_form:
+  path: '/admin/config/content/mod-block-admin'
+  defaults:
+    _form: '\Drupal\mod_block\Form\MBAdminForm'
+    _title: 'Block settings'
+  requirements:
+    _permission: 'administer mod block settings'
