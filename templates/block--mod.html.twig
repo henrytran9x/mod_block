@@ -27,8 +27,15 @@
  * @ingroup themeable
  */
 #}
+{%
+set classes = [
+'block',
+'block-' ~ configuration.provider|clean_class,
+'block-' ~ plugin_id|clean_class,
+]
+%}
 {% if block_prefix %} {{ block_prefix|raw }} {% endif %}
-<div{{ attributes }}>
+<div{{ attributes.addClass(classes) }}>
     {{ title_prefix }}
     {% if label %}
         {% if title_tag %}
