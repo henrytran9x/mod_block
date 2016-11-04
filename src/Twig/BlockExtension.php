@@ -32,17 +32,17 @@ class BlockExtension extends \Twig_Extension{
 
     public function render_block($id)
     {
-
         $block = \Drupal\block\Entity\Block::load($id);
-        $block_content = \Drupal::entityManager()
-            ->getViewBuilder('block')
-            ->view($block);
-        if(!$this->check_block_visibility($block)){
+        if(isset($block) && !$this->check_block_visibility($block)){
             unset($block);
             return ;
         }
-
-        return array('#markup' => drupal_render($block_content));
+        else if(isset($block) && $block->getTheme()){
+             $block_content = \Drupal::entityManager()
+            ->getViewBuilder('block')
+            ->view($block);
+            return array('#markup' => drupal_render($block_content));
+        }
     }
 
     public function check_block_visibility($block)
